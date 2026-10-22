@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style_todo.css">
+</head>
+
+<body>
+  <h1 class="logo">EST Todo List</h1>
+   <nav class="nav">
+      <ul>
+       <li>JSの練習をします</li>
+      </ul>
+    </nav>
+<button id="add-btn">追加</button>
+<input id="task-input" type="text">
+<ul id="task-list"></ul>
+
+<h2>完了済み</h2>
+<ul id="done-list"></ul>
+
+<h3>削除済み</h3>
+<ul id="delete-List"></ul>
+
+<script>
+const addBtn = document.getElementById('add-btn');
+const taskInput = document.getElementById('task-input');
+const taskList = document.getElementById('task-list');
+const doneList = document.getElementById('done-list');
+const deleteList=document.getElementById('delete-List');
+addBtn.addEventListener('click', () => {
+  const text = taskInput.value.trim(); // 前後の空白を除去
+
+  // バリデーション：空なら何もしない
+  if (text === '') {
+    alert('タスクを入力してください');
+    return;
+  }
+
+  // li 要素を作成してリストに追加
+  const li = document.createElement('li');
+
+  const span=document.createElement('span');
+  span.textContent = text;
+  li.appendChild(span);
+
+  // 3. 完了ボタンを作成
+  const completeBtn = document.createElement('button');
+  completeBtn.textContent = '完了';
+  completeBtn.style.marginLeft = '10px'; // ボタンとの間の余白
+
+  // 4. 完了ボタンをクリックしたときの動作を設定
+  completeBtn.addEventListener('click', () => {
+    // 完了済みリスト（doneList）に li を移動させる
+    doneList.appendChild(li);
+    // 移動後は完了ボタンを消す
+    completeBtn.remove();
+  });
+
+  // 5. li に完了ボタンを追加
+  li.appendChild(completeBtn);
+  taskList.appendChild(li);
+  taskInput.value = '';
+
+  //削除機能の追加
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = '削除';
+  deleteBtn.style.marginLeft = '10px'; // ボタンとの間の余白
+
+  // 削除ボタンをクリックしたときの動作を設定
+  deleteBtn.addEventListener('click', () => {
+    // 削除済みリスト（deleteList）に li を移動させる
+    deleteList.appendChild(li);
+    // 移動後は削除ボタンを消す
+    deleteBtn.remove();
+  });
+
+  // li に削除ボタンを追加
+  li.appendChild(deleteBtn);
+});
+
+// Enterキーでも追加できるようにする
+taskInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addBtn.click();
+});
+</script>
+
+
+</body>
