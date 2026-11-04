@@ -28,62 +28,123 @@ const addBtn = document.getElementById('add-btn');
 const taskInput = document.getElementById('task-input');
 const taskList = document.getElementById('task-list');
 const doneList = document.getElementById('done-list');
-const deleteList=document.getElementById('delete-List');
-addBtn.addEventListener('click', () => {
-  const text = taskInput.value.trim(); // 前後の空白を除去
+const deleteList = document.getElementById('delete-List');
+const STORAGE_KEY = 'est-todo-tasks';
 
-  // バリデーション：空なら何もしない
+let tasks = loadTasks();
+
+function loadTasks() {
+  try {
+    const savedTasks = localStorage.getItem(STORAGE_KEY);
+
+    if (!savedTasks) {
+      return [];
+    }
+
+    const parsedTasks = JSON.parse(savedTasks);
+
+    if (!Array.isArray(parsedTasks)) {
+      throw new Error('保存データが配列ではありません');
+    }
+
+    return parsedTasks.filter((task) => (
+      task &&
+      typeof task.id === 'string' &&
+      typeof task.title === 'string' &&
+      ['active', 'done', 'deleted'].includes(task.status)
+    ));
+  } catch (error) {
+    console.error('Todoデータの読み込みに失敗しました', error);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (removeError) {
+      console.error('不正なTodoデータを削除できませんでした', removeError);
+    }
+    return [];
+  }
+}
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    console.error('Todoデータの保存に失敗しました', error);
+    alert('Todoを保存できませんでした。ブラウザーの保存設定を確認してください。');
+  }
+}
+
+function createTask(title) {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    title,
+    status: 'active'
+  };
+}
+
+function addButton(label, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.style.marginLeft = '10px';
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+function renderTasks() {
+  taskList.innerHTML = '';
+  doneList.innerHTML = '';
+  deleteList.innerHTML = '';
+
+  tasks.forEach((task) => {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.textContent = task.title;
+    li.appendChild(span);
+
+    if (task.status === 'active') {
+      li.appendChild(addButton('完了', () => {
+        task.status = 'done';
+        saveTasks();
+        renderTasks();
+      }));
+      taskList.appendChild(li);
+    } else if (task.status === 'done') {
+      doneList.appendChild(li);
+    } else {
+      deleteList.appendChild(li);
+    }
+
+    if (task.status !== 'deleted') {
+      li.appendChild(addButton('削除', () => {
+        task.status = 'deleted';
+        saveTasks();
+        renderTasks();
+      }));
+    }
+  });
+}
+
+addBtn.addEventListener('click', () => {
+  const text = taskInput.value.trim();
+
   if (text === '') {
     alert('タスクを入力してください');
     return;
   }
 
-  // li 要素を作成してリストに追加
-  const li = document.createElement('li');
-
-  const span=document.createElement('span');
-  span.textContent = text;
-  li.appendChild(span);
-
-  // 3. 完了ボタンを作成
-  const completeBtn = document.createElement('button');
-  completeBtn.textContent = '完了';
-  completeBtn.style.marginLeft = '10px'; // ボタンとの間の余白
-
-  // 4. 完了ボタンをクリックしたときの動作を設定
-  completeBtn.addEventListener('click', () => {
-    // 完了済みリスト（doneList）に li を移動させる
-    doneList.appendChild(li);
-    // 移動後は完了ボタンを消す
-    completeBtn.remove();
-  });
-
-  // 5. li に完了ボタンを追加
-  li.appendChild(completeBtn);
-  taskList.appendChild(li);
+  tasks.push(createTask(text));
+  saveTasks();
+  renderTasks();
   taskInput.value = '';
-
-  //削除機能の追加
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = '削除';
-  deleteBtn.style.marginLeft = '10px'; // ボタンとの間の余白
-
-  // 削除ボタンをクリックしたときの動作を設定
-  deleteBtn.addEventListener('click', () => {
-    // 削除済みリスト（deleteList）に li を移動させる
-    deleteList.appendChild(li);
-    // 移動後は削除ボタンを消す
-    deleteBtn.remove();
-  });
-
-  // li に削除ボタンを追加
-  li.appendChild(deleteBtn);
 });
 
-// Enterキーでも追加できるようにする
-taskInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') addBtn.click();
+taskInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    addBtn.click();
+  }
 });
+
+renderTasks();
 </script>
 
 
